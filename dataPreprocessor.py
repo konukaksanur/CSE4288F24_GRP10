@@ -13,9 +13,9 @@ from nltk.corpus import wordnet
 #uygulanabilmesi için böyle bir sistem kurduk farklı datalarda özel karakterleri kaldırmak istemeyeiblirsin
 #daha uygulanabilirliği devamlılığı artan bi kod??hem de ön işleme fonksiyonları ful burda
 class DataPreprocessing:
-    def __init__ (self, remove_punc=False, lowercase=False,
-                  remove_stops=False, lemmatize=True,
-                  remove_mentions=False, remove_urls=False,remove_numbers=False):
+    def __init__ (self, remove_punc=True, lowercase=True,
+                  remove_stops=True , lemmatize=True,
+                  remove_mentions=True , remove_urls=True ,remove_numbers=True):
         self.remove_mentions = remove_mentions
         self.remove_urls = remove_urls
         self.remove_numbers = remove_numbers
@@ -32,26 +32,40 @@ class DataPreprocessing:
     #sadece dataframe nesnesinin referansını taşıyormuşuz ve memorylik bir şey yokmuş
     #o yüzden ağır değilmiş
     #pipeline hizmeti hem de sadece istenilenleri yapması için if else
-    def preprocess(self, text):
-        if self.remove_mentions:
-            text = self.remove_mentions_from_text(text)
-        if self.lowercase:
-            text = self.to_lowercase(text)
-        if self.remove_urls:
-            text = self.remove_urls_from_text(text)
-        if self.remove_numbers:
-            text = self.remove_numbers_from_text(text)
-        if self.remove_punc:
-            text = self.remove_punctuation(text)
-        if self.remove_stops:
-            text = self.remove_stopwords(text)
-        print(text)
-        if self.lemmatize:
-            text = self.lemmatize_words(text)
-        print(text)
-        
-        # Return a list of words
-        return text.split()  # This splits the text into words
+    def preprocess(self, df, column_name):
+    # Iterate over the DataFrame rows and process each text
+        for index, row in df.iterrows():
+            text = row[column_name]
+
+            # Create a dictionary to hold results for each step
+            processed_text = text
+
+            # Process each step and add the result to the DataFrame
+            if self.remove_mentions:
+                processed_text = self.remove_mentions_from_text(processed_text)
+                df.at[index, f'{column_name}_mentions_removed'] = processed_text
+            if self.lowercase:
+                processed_text = self.to_lowercase(processed_text)
+                df.at[index, f'{column_name}_lowercase'] = processed_text
+            if self.remove_urls:
+                processed_text = self.remove_urls_from_text(processed_text)
+                df.at[index, f'{column_name}_urls_removed'] = processed_text
+            if self.remove_numbers:
+                processed_text = self.remove_numbers_from_text(processed_text)
+                df.at[index, f'{column_name}_numbers_removed'] = processed_text
+            if self.remove_punc:
+                processed_text = self.remove_punctuation(processed_text)
+                df.at[index, f'{column_name}_punctuation_removed'] = processed_text
+            if self.remove_stops:
+                processed_text = self.remove_stopwords(processed_text)
+                df.at[index, f'{column_name}_stopwords_removed'] = processed_text
+            if self.lemmatize:
+                processed_text = self.lemmatize_words(processed_text)
+                df.at[index, f'{column_name}_lemmatized'] = processed_text
+
+        # Return the updated DataFrame with new columns
+        return df
+
 
 
     def remove_punctuation(self, text):

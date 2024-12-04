@@ -12,26 +12,12 @@ from nltk.corpus import wordnet
 from nltk import pos_tag
 from dataPreprocessor import DataPreprocessing
 
-
-import nltk
-import ssl
-
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
-
-nltk.download()
-
-
-
+#nltk.download('averaged_perceptron_tagger_eng')
 
 def readDataset(FileName ):
     column_names = ['target', 'ids', 'date', 'flag', 'user', 'text']
     df = pd.read_csv(FileName, encoding='latin1', names=column_names)
-    df= df.sample(n=1000, random_state=1)
+    df = df.head(10)
     print("\n" , df.head())
     print("\n" , df.tail() , "\n")
     
@@ -43,27 +29,21 @@ def data_details(df):
     print("\nMissing value count \n")
     print(df.isnull().sum())
     print("\nDuplicated value count" , df.duplicated().sum())
-##önce datayıgörüntüle ve duplicate var mı flaan bak
-#sonra 
-# Örnek Kullanım
-# preprocessor = DataPreprocessing(remove_punc=True, lowercase=True, remove_stops=True)
-# sample_text = "Hello, World! This is another sample text for testing."
-# processed_text = preprocessor.preprocess(sample_text)
-# df['processed_text'] = df['text'].apply(processor.preprocess)
 
-# print(processed_text) 
+#datayı ayarladıktan sonra diğer classın preprocessorunu kullanarak ön işlemeyi yapıyoruz 
 df = readDataset("training.1600000.processed.noemoticon.csv")
 df_filtered = data_details(df)
-preprocessor = DataPreprocessing(remove_punc=True, lowercase=True, remove_stops=True)
+preprocessor = DataPreprocessing()
+#pandasın apply metodu sayesinde sütundaki satırları tek tek bu işleme sokuyoruz
+# df['processed_text'] = df['text'].apply(preprocessor.preprocess)
 
-df['processed_text'] = df['text'].apply(preprocessor.preprocess)
+# print(df['processed_text'].head())
 
-print(df['processed_text'].head())
+df = preprocessor.preprocess(df, 'text')
 
+pd.set_option('display.max_columns', None)  # Tüm sütunları yazdırır
 
-
-
-
+print(df.head())
 
 
 
