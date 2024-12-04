@@ -13,9 +13,9 @@ from nltk.corpus import wordnet
 #uygulanabilmesi için böyle bir sistem kurduk farklı datalarda özel karakterleri kaldırmak istemeyeiblirsin
 #daha uygulanabilirliği devamlılığı artan bi kod??hem de ön işleme fonksiyonları ful burda
 class DataPreprocessing:
-    def __init__ (self, remove_punc=True, lowercase=True,
-                  remove_stops=True, lemmatize=True,
-                  remove_mentions=True, remove_urls=True,remove_numbers=True):
+    def __init__ (self, remove_punc=False, lowercase=False,
+                  remove_stops=False, lemmatize=True,
+                  remove_mentions=False, remove_urls=False,remove_numbers=False):
         self.remove_mentions = remove_mentions
         self.remove_urls = remove_urls
         self.remove_numbers = remove_numbers
@@ -45,10 +45,13 @@ class DataPreprocessing:
             text = self.remove_punctuation(text)
         if self.remove_stops:
             text = self.remove_stopwords(text)
-        # if self.lemmatize:
-        #     text = self.lemmatize_words(text)
+        print(text)
+        if self.lemmatize:
+            text = self.lemmatize_words(text)
+        print(text)
         
-        return text
+        # Return a list of words
+        return text.split()  # This splits the text into words
 
 
     def remove_punctuation(self, text):
