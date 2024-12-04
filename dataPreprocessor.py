@@ -16,15 +16,16 @@ class DataPreprocessing:
     def __init__ (self, remove_punc=True, lowercase=True,
                   remove_stops=True, lemmatize=True,
                   remove_mentions=True, remove_urls=True,remove_numbers=True):
+        self.remove_mentions = remove_mentions
+        self.remove_urls = remove_urls
+        self.remove_numbers = remove_numbers
         self.remove_punc= remove_punc
         self.lowercase= lowercase
         self.remove_stops= remove_stops
         self.lemmatize = lemmatize
         self.stop_words= set(stopwords.words('english'))
         self.table= str.maketrans('','',string.punctuation)
-        self.remove_mentions = remove_mentions
-        self.remove_urls = remove_urls
-        self.remove_numbers = remove_numbers
+        
 
 
     #böyle yaparak datayı ful buraya taşıdık ağır olabilir diye düşündüm ama
@@ -32,16 +33,16 @@ class DataPreprocessing:
     #o yüzden ağır değilmiş
     #pipeline hizmeti hem de sadece istenilenleri yapması için if else
     def preprocess(self, text):
-        if self.remove_punc:
-            text = self.remove_punctuation(text)
         if self.remove_mentions:
             text = self.remove_mentions_from_text(text)
+        if self.lowercase:
+            text = self.to_lowercase(text)
         if self.remove_urls:
             text = self.remove_urls_from_text(text)
         if self.remove_numbers:
             text = self.remove_numbers_from_text(text)
-        if self.lowercase:
-            text = self.to_lowercase(text)
+        if self.remove_punc:
+            text = self.remove_punctuation(text)
         if self.remove_stops:
             text = self.remove_stopwords(text)
         # if self.lemmatize:

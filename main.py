@@ -70,7 +70,7 @@ print(df['processed_text'].head())
 #     df_filtered.loc[:, 'text'] = df_filtered['text'].apply(lambda x: x.lower())
 #     #loc meselesindeki esneklik şundan kaynaklı sadece belirli satırlara bile işlem ypaabilmene olanak sağlıyor :, kısmı tüm satırlar demek
 
-#     df_filtered.loc[:, 'text'] = df_filtered['text'].replace('@[A-Za-z0-9]', '', regex=True)
+#     df_filtered.loc[:, 'text'] = df_filtered['text'].replace(r'@[A-Za-z0-9_]+', '', regex=True)
 #     df_filtered.loc[:, 'text'] = df_filtered['text'].replace(r'http\S+', '', regex=True)
 #     df_filtered.loc[:, 'text'] = df_filtered['text'].replace(r'www\S+', '', regex=True)
 
