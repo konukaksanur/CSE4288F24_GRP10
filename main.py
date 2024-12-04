@@ -13,11 +13,25 @@ from nltk import pos_tag
 from dataPreprocessor import DataPreprocessing
 
 
+import nltk
+import ssl
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+nltk.download()
+
+
 
 
 def readDataset(FileName ):
     column_names = ['target', 'ids', 'date', 'flag', 'user', 'text']
     df = pd.read_csv(FileName, encoding='latin1', names=column_names)
+    df= df.sample(n=1000, random_state=1)
     print("\n" , df.head())
     print("\n" , df.tail() , "\n")
     
@@ -41,6 +55,7 @@ def data_details(df):
 df = readDataset("training.1600000.processed.noemoticon.csv")
 df_filtered = data_details(df)
 preprocessor = DataPreprocessing(remove_punc=True, lowercase=True, remove_stops=True)
+
 df['processed_text'] = df['text'].apply(preprocessor.preprocess)
 
 print(df['processed_text'].head())
