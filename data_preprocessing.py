@@ -50,13 +50,18 @@ def get_wordnet_pos(word):
 def plot_workclouds(positive_text, negative_text):
     fig, axes = plt.subplots(1,2, figsize=(14,7))
 
-    wordcloud_positive = WordCloud(width=800, height=400, background_color='white', colormap='viridis').generate(positive_text)
-    axes[0].imshow(wordcloud_positive, interpolation='bilinear')
-    axes[0].set_title('Positive tweets')
-    axes[0].axis('off')
+    if positive_text.strip():  # Eğer metin boş değilse
+        wordcloud_positive = WordCloud(width=800, height=400, background_color='white', colormap='viridis').generate(positive_text)
+        axes[0].imshow(wordcloud_positive, interpolation='bilinear')
+        axes[0].set_title('Positive tweets')
+        axes[0].axis('off')
+    else:  # Eğer metin boşsa
+        axes[0].text(0.5, 0.5, 'No Positive Data Available', fontsize=14, ha='center', va='center')
+        axes[0].set_title('Positive tweets')
+        axes[0].axis('off')
 
     wordcloud_negative = WordCloud(width=800, height=400, background_color='white', colormap='magma').generate(negative_text)
-    axes[0].imshow(wordcloud_positive, interpolation='bilinear')
+    axes[0].imshow(wordcloud_negative, interpolation='bilinear')
     axes[0].set_title('Negative tweets')
     axes[0].axis('off')
 
@@ -118,6 +123,7 @@ def data_preprocessing(df):
     df_filtered['target'] = df_filtered['target'].replace(4,1)
     print(df_filtered['target'].head())
 
+
     #Converting texts to Numerical Values:
 
     vectorizer = TfidfVectorizer()
@@ -147,6 +153,8 @@ def data_preprocessing(df):
 
     positive_text = ' '.join(df_filtered[df_filtered['target'] == 1]['processed_text'].astype(str))
     negative_text = ' '.join(df_filtered[df_filtered['target'] == 0]['processed_text'].astype(str))
+    if(positive_text==0): print("labosumben")
+        
 
     plot_workclouds(positive_text, negative_text)
 
@@ -198,8 +206,8 @@ def data_preprocessing(df):
     plt.show()
   
 
-df = readDataset("training.1600000.processed.noemoticon.csv")
-#df = readDataset("test_dataset.csv")
+#df = readDataset("training.1600000.processed.noemoticon.csv")
+df = readDataset("test_dataset.csv")
 data_details(df)
 data_preprocessing(df)
 
