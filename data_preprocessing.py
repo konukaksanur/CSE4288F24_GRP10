@@ -153,7 +153,7 @@ def data_preprocessing(df):
 
     positive_text = ' '.join(df_filtered[df_filtered['target'] == 1]['processed_text'].astype(str))
     negative_text = ' '.join(df_filtered[df_filtered['target'] == 0]['processed_text'].astype(str))
-    if(positive_text==0): print("labosumben")
+    
         
 
     plot_workclouds(positive_text, negative_text)
