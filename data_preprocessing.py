@@ -48,22 +48,19 @@ def get_wordnet_pos(word):
     return tag_dict.get(tag, wordnet.NOUN)
 
 def plot_workclouds(positive_text, negative_text):
-    fig, axes = plt.subplots(1,2, figsize=(14,7))
+    fig, axes = plt.subplots(1, 2, figsize=(14, 7))
 
-    if positive_text.strip():  # Eğer metin boş değilse
-        wordcloud_positive = WordCloud(width=800, height=400, background_color='white', colormap='viridis').generate(positive_text)
-        axes[0].imshow(wordcloud_positive, interpolation='bilinear')
-        axes[0].set_title('Positive tweets')
-        axes[0].axis('off')
-    else:  # Eğer metin boşsa
-        axes[0].text(0.5, 0.5, 'No Positive Data Available', fontsize=14, ha='center', va='center')
-        axes[0].set_title('Positive tweets')
-        axes[0].axis('off')
-
-    wordcloud_negative = WordCloud(width=800, height=400, background_color='white', colormap='magma').generate(negative_text)
-    axes[0].imshow(wordcloud_negative, interpolation='bilinear')
-    axes[0].set_title('Negative tweets')
+    # Generate the wordcloud for positive tweets
+    wordcloud_positive = WordCloud(width=800, height=400, background_color='white', colormap='viridis').generate(positive_text)
+    axes[0].imshow(wordcloud_positive, interpolation='bilinear')
+    axes[0].set_title('Positive tweets')
     axes[0].axis('off')
+
+    # Generate the wordcloud for negative tweets
+    wordcloud_negative = WordCloud(width=800, height=400, background_color='white', colormap='magma').generate(negative_text)
+    axes[1].imshow(wordcloud_negative, interpolation='bilinear')  # Fixed here: use wordcloud_negative
+    axes[1].set_title('Negative tweets')
+    axes[1].axis('off')
 
     plt.subplots_adjust(wspace=0.2)
     plt.show()
@@ -93,7 +90,7 @@ def data_preprocessing(df):
     print()
     print(df_filtered[['words_cleaned' , 'words_lemmatized']].head(10))
 
-    # Remove extra spces
+    # Remove extra spaces
     df_filtered['processed_text'] = df_filtered['words_lemmatized'].apply(lambda words: ' '.join(words).strip())
     print(df_filtered['processed_text'].head())
 
@@ -144,11 +141,11 @@ def data_preprocessing(df):
 
     custom_labels = [labels.get(x, str(x)) for x in target_counts]
 
-    colors = {'violet', 'blue'}
+    colors = ['#2b8cbe', '#7bccc4']
 
     plt.figure(figsize=(7,7))
     plt.pie(target_counts, labels=custom_labels, colors=colors, autopct='%1.1f%%', startangle=140)
-    plt.title('target Distribution', size=14)
+    plt.title('Target Distribution', size=14)
     plt.show()
 
     positive_text = ' '.join(df_filtered[df_filtered['target'] == 1]['processed_text'].astype(str))
@@ -163,8 +160,10 @@ def data_preprocessing(df):
 
     plt.figure(figsize=(12,6))
     for sentiment in df_filtered['target'].unique():
+        sentiment_label = 'Positive' if sentiment == 0 else 'Negative'
         subset = df_filtered[df_filtered['target'] == sentiment]
-        plt.hist(subset['text_length'], bins=50, alpha=0.5, label=f'Sentiment {sentiment}')
+        color = '#2b8cbe' if sentiment == 0 else '#238b45'
+        plt.hist(subset['text_length'], bins=50, alpha=0.5, label=f'Sentiment {sentiment_label}' , color=color)
 
     plt.title('Relationship Between Sentiment and Tweet Length')
     plt.xlabel('Tweet Length')
@@ -180,14 +179,13 @@ def data_preprocessing(df):
     user_sentiment = top_users_df.groupby('user')['target'].value_counts().unstack()
 
     #visualization
-    user_sentiment.plot(kind='bar', stacked=True, figsize=(14,8), color=['pink', 'purple'])
+    user_sentiment.plot(kind='bar', stacked=True, figsize=(8,5), color=['#2b8cbe', '#cb181d'])
     plt.title('Sentiment Distrubition of Most Popular Users')
     plt.xlabel('Users')
     plt.ylabel('Tweets')
-    plt.legend(title='Sentiment', labels=['Negative', 'Positive'])
+    plt.legend(title='Sentiment', labels=['Positive' , 'Negative'])
     plt.xticks(rotation=45)
     plt.show()
-
 
     # Outlier
     z_scores = stats.zscore(df_filtered['text_length'])
