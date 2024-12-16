@@ -14,6 +14,15 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from wordcloud import WordCloud
 from scipy import stats
 
+from sklearn.model_selection import train_test_split , cross_validate
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+
+
+
 
 nltk.download('stopwords')
 nltk.download('punkt')
@@ -203,6 +212,42 @@ def data_preprocessing(df):
     plt.grid(True)
     plt.show()
   
+
+    y = df_filtered['target']
+    x_train, x_test, y_train, y_test = train_test_split(X, y, test_size =0.2, random_state=42)
+    print("Train set size:", x_train.shape)
+    print("Test set size:", x_test.shape)
+
+
+    classifier = {
+        "Logistic Regression": LogisticRegression(),
+        "Random Forest Classsifier": RandomForestClassifier(),
+        "Support Vector Classifier" : SVC()
+    }
+
+    for name, classifier in classifier.items():
+        classifier.fit(x_train, y_train)
+
+        y_test_pred = classifier.predict(x_test)
+
+        accuracy = accuracy_score(y_test, y_test_pred)
+        conf_matrix = confusion_matrix(y_test, y_test_pred)
+        class_report = classification_report(y_test, y_test_pred)
+
+        scores = cross_validate(classifier, x_train, y_train, scoring=['accuracy,' 'precision', 'recall', 'f1'], cv = 10, return_train_score=False)
+
+        scores_df = pd.DataFrame(scores)
+
+        print(f"Model: {name.upper()}")
+        print(f"Accuracy Score: {accuracy:.5f}")
+        print("Confusion MAtrix:")
+        print(conf_matrix)
+        print("Classification Report:")
+        print(class_report)
+        print("Cross-Validation Scores:")
+        print(scores_df.mean().apply("{:.5f}".format))
+        print("\###############################################################\n")
+
 
 #df = readDataset("training.1600000.processed.noemoticon.csv")
 df = readDataset("test_dataset.csv")
