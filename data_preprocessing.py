@@ -234,7 +234,7 @@ def data_preprocessing(df):
         conf_matrix = confusion_matrix(y_test, y_test_pred)
         class_report = classification_report(y_test, y_test_pred)
 
-        scores = cross_validate(classifier, x_train, y_train, scoring=['accuracy,' 'precision', 'recall', 'f1'], cv = 10, return_train_score=False)
+        scores = cross_validate(classifier, x_train, y_train, scoring=['accuracy', 'precision', 'recall', 'f1'], cv = 10, return_train_score=False)
 
         scores_df = pd.DataFrame(scores)
 
