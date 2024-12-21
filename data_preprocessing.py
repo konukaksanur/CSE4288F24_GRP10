@@ -25,6 +25,7 @@ from sklearn.cluster import KMeans, DBSCAN
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import silhouette_score
 from sklearn.feature_extraction.text import TfidfVectorizer
+from textblob import TextBlob
 
 
 
@@ -350,8 +351,6 @@ def data_preprocessing(df):
     dbscan_silhouette= silhouette_score(x_combined, df_filtered['dbscan_labels'])
 
     
-    
-
 
 
 #df = readDataset("training.1600000.processed.noemoticon.csv")
