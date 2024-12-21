@@ -26,6 +26,11 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import silhouette_score
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from sklearn.naive_bayes import MultinomialNB  # Naive Bayes import
+from sklearn.tree import DecisionTreeClassifier #gain
+from sklearn.neural_network import MLPClassifier
+
+
 
 
 
@@ -227,7 +232,10 @@ def data_preprocessing(df):
     classifier = {
         "Logistic Regression": LogisticRegression(),
         "Random Forest Classsifier": RandomForestClassifier(),
-        "Support Vector Classifier" : SVC()
+        "Support Vector Classifier" : SVC(),
+        "Naive Bayes": MultinomialNB(),  
+        "Decision Tree (Gini)": DecisionTreeClassifier(criterion='gini'),
+        "Artificial Neural Network (ANN)": MLPClassifier(),
     }
 
     for name, classifier in classifier.items():
