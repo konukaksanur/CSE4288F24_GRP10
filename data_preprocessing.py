@@ -14,12 +14,17 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from wordcloud import WordCloud
 from scipy import stats
 
-from sklearn.model_selection import train_test_split , cross_validate
+from sklearn.model_selection import train_test_split , cross_validate , RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix, silhouette_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
+
+from sklearn.cluster import KMeans, DBSCAN
+
+
+
 
 
 
@@ -247,6 +252,101 @@ def data_preprocessing(df):
         print("Cross-Validation Scores:")
         print(scores_df.mean().apply("{:.5f}".format))
         print("\###############################################################\n")
+
+
+        # Hyperparameter Optimization
+
+        # hypermeter intervals
+        param_distributions = {
+            'C': np.longspace(-4, 4, 20),
+            'solver': ['liblinear', 'saga'],
+            'max_iter': [100, 200, 300]
+        }
+
+        # model
+        model = LogisticRegression()
+
+        # RandomizedSearchCV object
+        random_search = RandomizedSearchCV(
+            estimator=model,
+            param_distributions=param_distributions,
+            n_iter=100,
+            scoring='accuracy',
+            cv=5,
+            verbose=1,
+            random_state=42,
+            n_jobs=-1
+        )
+
+        # training model
+        random_search.fit(X,y)
+
+        print("Best Parameters:", random_search.best_params_)
+        print("Best Score:", random_search.best_score_)
+
+        # Best parameters with Logistic Regression Model
+        model = LogisticRegression(solver='saga', max_iter=100, C=0.615848211066026)
+
+        # training model
+        model.fit(x_train, y_train)
+
+        # prediction test set
+        y_test_pred = model.predict(x_test)
+
+        # performance metrics
+        accuracy = accuracy_score(y_test, y_test_pred)
+        report = classification_report(y_test, y_test_pred)
+        conf_matrix = confusion_matrix(y_test, y_test_pred)
+
+        print(f"Accuracy: {accuracy:.4f}")
+        print("Classification Report:\n", report)
+
+
+        # visualization confusion matrix
+        plt.figure(figsize=(8,6))
+        sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=['Negative', 'Positive'], yticklabels=['Negative', 'Positive'])
+        plt.title('Confusion Matrix')
+        plt.xlabel('Predicted')
+        plt.ylabel('Actual')
+        plt.show()
+
+
+
+        # cluster 
+        # calculate frequency words
+        vectorizer = TfidfVectorizer()
+        X = vectorizer.fit_transform(df_filtered['processed_tweets']).toarray()  #transformation
+
+        # calculte sentiment score for each tweet in column 
+        df_filtered['sentiment_score'] = df_filtered['processed_tweets'].apply(lambda x: TextBlob(x).sentiment.polarity)
+
+        # convert sentiment score into two-dimensional array (-1 and 1)
+        sentiment_scores = df_filtered['sentiment_score'].values.reshape(-1,1)
+
+        # combine tdidf results and sentiment score
+        X_combined = np.hstack((X, sentiment_scores))
+
+
+
+        # k-means
+        Kmeans = KMeans(n_clusters=2, random_state=42)
+        Kmeans.fit(X_combined)
+        df_filtered['kmeans_labels'] = Kmeans.labels_
+
+        # DBScan
+        dbscan = DBSCAN(eps=0.5, min_samples=5)
+        dbscan.fit(X_combined)
+        df_filtered['dbscan_labels'] = dbscan.labels_
+
+
+        # calculate silhouette score
+        kmeans_silhouette = silhouette_score(X_combined, df_filtered['kmeans_labels'])
+        dbscan_silhouette = silhouette_score(X_combined, df_filtered['dbscan_labels'])
+
+        print('K-means Silhouette Score:', kmeans_silhouette)
+        print('DBScan Silhouette Score:', dbscan_silhouette)
+
+
 
 
 #df = readDataset("training.1600000.processed.noemoticon.csv")
