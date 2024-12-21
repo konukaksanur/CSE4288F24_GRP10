@@ -14,12 +14,17 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from wordcloud import WordCloud
 from scipy import stats
 
-from sklearn.model_selection import train_test_split , cross_validate
+from sklearn.model_selection import train_test_split , cross_validate , RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report, accuracy_score, confusion_matrix, silhouette_score
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
+
+from sklearn.cluster import KMeans, DBSCAN
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import silhouette_score
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 
@@ -249,11 +254,110 @@ def data_preprocessing(df):
         print("\###############################################################\n")
 
 
+
+
+    #BURADA DATASET KÜÇÜK OLDUĞU İÇİN C FALAN DEĞİŞMELİ !! BEN KÜÇÜK DATASETE UYDURDUM 
+    #hypermeter intervals 
+    param_distributions = {
+        'C': [0.1, 1, 10],
+        'solver' : ['liblinear', 'saga'],
+        'max_iter': [100 ,200 ,300]
+    }
+
+    #model
+    model=LogisticRegression()
+
+    #RandomizedSearchCV object
+    random_search= RandomizedSearchCV(
+        estimator=model,
+        param_distributions=param_distributions,
+        n_iter=100,
+        scoring='accuracy',
+        cv=5,
+        verbose=1,
+        random_state=42,
+        n_jobs=1
+
+    )
+
+    #training model
+    random_search.fit(X, y)
+
+    print("Best Parameters:", random_search.best_params_)
+    print("Best Score:", random_search.best_score_)
+
+
+
+    #TRAINING THE MODEL
+    #best parameters with Logistic Regression Model
+    model= LogisticRegression(solver='saga', max_iter=100, C=1)
+
+    #training model 
+    model.fit(x_train, y_train)
+
+    #prediction test set
+    y_pred= model.predict(x_test)
+
+    #performance metrics
+    accuracy= accuracy_score(y_test, y_pred)
+    report= classification_report(y_test, y_pred)
+    conf_matrix= confusion_matrix(y_test, y_pred)
+
+    print(f"Accuracy: {accuracy: .4f}")
+    print("Classification Report: \n", report)
+
+    #visualization confusion matrix
+    plt.figure(figsize=(8,6))
+    sns.heatmap(conf_matrix, annot=True, fnt='d', cmap='Blues',
+    xticklabels=['Negative', 'Pozitive'],
+    yticklabels=['Negative', 'Pozitive'])
+    plt.title('Confusion Matrix')
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.show()
+
+
+    #UNSUPERVISED LEARNING 
+
+    #clustering algorithms
+    #preprocessing for unsupervised learning
+    #calculate frequency words
+    vectorizer= TfidfVectorizer()
+    x= vectorizer.fit_transform(df_filtered['processed_tweets']).toArray() #transformation
+
+    #calculate sentiment score for each tweet in column 'processed_tweets' using TextBlob
+    # 'polarity' value ranges from -1(negative) to 1 (possitive)
+    df_filtered['sentiment_score']= df_filtered['processed_tweets'].apply(lambda x: TextBlob(x).sentiment.polarity)
+
+    #convert sentiment score into two-dimensional array (-1 and 1)
+    sentiment_scores= df_filtered['sentiment_score'].values.reshape(-1,1)
+
+    #combine tfidf results and sentiment score
+    x_combined= np.hstack((X,sentiment_scores))
+
+    #kmeans
+    kmeans= KMeans(n_clusters=2, random_state=42)
+    kmeans.fit(x_combined)
+    df_filtered['kmeans_labels']= kmeans.labels_
+
+    #dbscan
+    dbscan= DBSCAN(eps=0.5, min_samples=5)
+    dbscan.fit(x_combined)
+    df_filtered['dbscan_labels']= dbscan.labels_
+
+    #calculate silhouette score
+    kmeans_silhouette= silhouette_score(x_combined, df_filtered['kmeans_labels'])
+    dbscan_silhouette= silhouette_score(x_combined, df_filtered['dbscan_labels'])
+
+    
+    
+
+
+
 #df = readDataset("training.1600000.processed.noemoticon.csv")
 df = readDataset("test_dataset.csv")
 data_details(df)
 data_preprocessing(df)
-
 
 
 
