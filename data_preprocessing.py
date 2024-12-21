@@ -320,12 +320,37 @@ def data_preprocessing(df):
     #UNSUPERVISED LEARNING 
 
     #clustering algorithms
+    #preprocessing for unsupervised learning
+    #calculate frequency words
+    vectorizer= TfidfVectorizer()
+    x= vectorizer.fit_transform(df_filtered['processed_tweets']).toArray() #transformation
+
+    #calculate sentiment score for each tweet in column 'processed_tweets' using TextBlob
+    # 'polarity' value ranges from -1(negative) to 1 (possitive)
+    df_filtered['sentiment_score']= df_filtered['processed_tweets'].apply(lambda x: TextBlob(x).sentiment.polarity)
+
+    #convert sentiment score into two-dimensional array (-1 and 1)
+    sentiment_scores= df_filtered['sentiment_score'].values.reshape(-1,1)
+
+    #combine tfidf results and sentiment score
+    x_combined= np.hstack((X,sentiment_scores))
+
+    #kmeans
+    kmeans= KMeans(n_clusters=2, random_state=42)
+    kmeans.fit(x_combined)
+    df_filtered['kmeans_labels']= kmeans.labels_
+
+    #dbscan
+    dbscan= DBSCAN(eps=0.5, min_samples=5)
+    dbscan.fit(x_combined)
+    df_filtered['dbscan_labels']= dbscan.labels_
+
+    #calculate silhouette score
+    kmeans_silhouette= silhouette_score(x_combined, df_filtered['kmeans_labels'])
+    dbscan_silhouette= silhouette_score(x_combined, df_filtered['dbscan_labels'])
+
     
-
-
-
-
-
+    
 
 
 
