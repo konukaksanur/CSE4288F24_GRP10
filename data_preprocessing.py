@@ -14,12 +14,17 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from wordcloud import WordCloud
 from scipy import stats
 
-from sklearn.model_selection import train_test_split , cross_validate
+from sklearn.model_selection import train_test_split , cross_validate , RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
+
+from sklearn.cluster import KMeans, DBSCAN
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import silhouette_score
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 
@@ -155,14 +160,14 @@ def data_preprocessing(df):
     plt.figure(figsize=(7,7))
     plt.pie(target_counts, labels=custom_labels, colors=colors, autopct='%1.1f%%', startangle=140)
     plt.title('Target Distribution', size=14)
-    plt.show()
+    #plt.show()
 
     positive_text = ' '.join(df_filtered[df_filtered['target'] == 1]['processed_text'].astype(str))
     negative_text = ' '.join(df_filtered[df_filtered['target'] == 0]['processed_text'].astype(str))
     
         
 
-    plot_workclouds(positive_text, negative_text)
+    #plot_workclouds(positive_text, negative_text)
 
     # group lengths by emotion labels
     df_filtered['text_length'] = df_filtered['processed_text'].apply(len)
@@ -178,7 +183,7 @@ def data_preprocessing(df):
     plt.xlabel('Tweet Length')
     plt.ylabel('Frequency')
     plt.legend()
-    plt.show()
+    #plt.show()
 
     #sentiment distribution per user
 
@@ -194,7 +199,7 @@ def data_preprocessing(df):
     plt.ylabel('Tweets')
     plt.legend(title='Sentiment', labels=['Positive' , 'Negative'])
     plt.xticks(rotation=45)
-    plt.show()
+    #plt.show()
 
     # Outlier
     z_scores = stats.zscore(df_filtered['text_length'])
@@ -210,7 +215,7 @@ def data_preprocessing(df):
     plt.ylabel('Tweet Lengths')
     plt.legend()
     plt.grid(True)
-    plt.show()
+    #plt.show()
   
 
     y = df_filtered['target']
@@ -247,6 +252,81 @@ def data_preprocessing(df):
         print("Cross-Validation Scores:")
         print(scores_df.mean().apply("{:.5f}".format))
         print("\###############################################################\n")
+
+
+
+
+    #BURADA DATASET KÜÇÜK OLDUĞU İÇİN C FALAN DEĞİŞMELİ !! BEN KÜÇÜK DATASETE UYDURDUM 
+    #hypermeter intervals 
+    param_distributions = {
+        'C': [0.1, 1, 10],
+        'solver' : ['liblinear', 'saga'],
+        'max_iter': [100 ,200 ,300]
+    }
+
+    #model
+    model=LogisticRegression()
+
+    #RandomizedSearchCV object
+    random_search= RandomizedSearchCV(
+        estimator=model,
+        param_distributions=param_distributions,
+        n_iter=100,
+        scoring='accuracy',
+        cv=5,
+        verbose=1,
+        random_state=42,
+        n_jobs=1
+
+    )
+
+    #training model
+    random_search.fit(X, y)
+
+    print("Best Parameters:", random_search.best_params_)
+    print("Best Score:", random_search.best_score_)
+
+
+
+    #TRAINING THE MODEL
+    #best parameters with Logistic Regression Model
+    model= LogisticRegression(solver='saga', max_iter=100, C=1)
+
+    #training model 
+    model.fit(x_train, y_train)
+
+    #prediction test set
+    y_pred= model.predict(x_test)
+
+    #performance metrics
+    accuracy= accuracy_score(y_test, y_pred)
+    report= classification_report(y_test, y_pred)
+    conf_matrix= confusion_matrix(y_test, y_pred)
+
+    print(f"Accuracy: {accuracy: .4f}")
+    print("Classification Report: \n", report)
+
+    #visualization confusion matrix
+    plt.figure(figsize=(8,6))
+    sns.heatmap(conf_matrix, annot=True, fnt='d', cmap='Blues',
+    xticklabels=['Negative', 'Pozitive'],
+    yticklabels=['Negative', 'Pozitive'])
+    plt.title('Confusion Matrix')
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.show()
+
+
+    #UNSUPERVISED LEARNING 
+
+    #clustering algorithms
+    
+
+
+
+
+
+
 
 
 #df = readDataset("training.1600000.processed.noemoticon.csv")
