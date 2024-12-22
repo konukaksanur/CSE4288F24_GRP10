@@ -11,19 +11,15 @@ from nltk.corpus import wordnet, stopwords
 from wordcloud import WordCloud
 from scipy import stats
 
+# Import required modules for machine learning with Sklearn library
 from sklearn.model_selection import train_test_split, cross_validate, RandomizedSearchCV
-from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix, silhouette_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 
 from sklearn.neighbors import KNeighborsClassifier
-
-from sklearn.cluster import KMeans, DBSCAN
 from sklearn.feature_extraction.text import TfidfVectorizer
-from textblob import TextBlob
-
 from sklearn.naive_bayes import GaussianNB  # Naive Bayes import
 from sklearn.tree import DecisionTreeClassifier  # gain
 from sklearn.neural_network import MLPClassifier
@@ -31,41 +27,43 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.exceptions import ConvergenceWarning  # for sklearn ConvergenceWarning 
 import warnings
 
+# NLTK data download operations
 nltk.download('stopwords')
 nltk.download('punkt_tab')
 nltk.download('wordnet')
 nltk.download('averaged_perceptron_tagger')
 nltk.download('averaged_perceptron_tagger_eng')
 
-
 # SyntaxWarning, ConvergenceWarning ve UserWarning warnings
 warnings.filterwarnings('ignore', category=SyntaxWarning)
 warnings.filterwarnings('ignore', category=ConvergenceWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
 
-
+# Reading and summarizing the dataset
 def readDataset(FileName):
     column_names = ['target', 'ids', 'date', 'flag', 'user', 'text']
     df = pd.read_csv(FileName, encoding='latin1', names=column_names)
     print("\n", df.head())
     print("\n", df.tail(), "\n")
-    print("Dataset is read.") # Veri setinin ortasından 10.000 veri almak
-    total_rows = len(df)
-    start_index = total_rows // 2 - 5000 # Ortaya yakın başlangıç
-    end_index = total_rows // 2 + 5000 # Ortaya yakın bitiş
-    middle_10000 = df.iloc[start_index:end_index] # Ortadaki 10.000 veriyi al # Sonuçları yazdırma (isteğe bağlı)
-    print("\nMiddle 10,000 rows:\n", middle_10000)
-    return middle_10000 # Sadece ortadaki 10.000 veriyi döndürü
+    print("Dataset is read.")
 
+    # Select the middle 10,000 rows
+    total_rows = len(df)
+    start_index = total_rows // 2 - 5000 
+    end_index = total_rows // 2 + 5000 
+    middle_10000 = df.iloc[start_index:end_index] 
+    print("\nMiddle 10,000 rows:\n", middle_10000)
+    return middle_10000
 
 def data_details(df):
+    # Detailed analysis of the dataset
     print("\n", df.info())
     print("\nMissing value count \n")
-    print(df.isnull().sum())
-    print("\nDuplicated value count", df.duplicated().sum())
-
+    print(df.isnull().sum()) # Number of missing values
+    print("\nDuplicated value count", df.duplicated().sum()) # Number of repeated values
 
 def get_wordnet_pos(word):
+    # Helping the lemmatization process by determining the type of words
     tag = nltk.pos_tag([word])[0][1][0].upper()
     tag_dict = {"J": wordnet.ADJ,
                 "N": wordnet.NOUN,
@@ -102,16 +100,21 @@ def data_preprocessing(df):
 
     df_filtered = df[['target', 'text']].copy()
 
+    # Convert all text to lowercase
     df_filtered['text'] = df_filtered['text'].str.lower()
+    # Remove usernames, URLs and numbers
     df_filtered['text'] = df_filtered['text'].replace('@[A-Za-z0-9]+', '', regex=True)
     df_filtered['text'] = df_filtered['text'].replace(r'htt\S+', '', regex=True)
     df_filtered['text'] = df_filtered['text'].replace(r'www\S+', '', regex=True)
     df_filtered['text'] = df_filtered['text'].apply(lambda x: re.sub('[0-9]+', '', x))
 
+    # Remove punctuation
     table = str.maketrans('', '', string.punctuation)
     df_filtered['text'] = df_filtered['text'].apply(lambda x: ' '.join([w.translate(table) for w in x.split()]))
+    # Split words into tokens
     df_filtered['words'] = df_filtered['text'].apply(word_tokenize)
 
+    # Remove stopwords
     stop_words = set(stopwords.words('english'))
     df_filtered['words_cleaned'] = df_filtered['words'].apply(
         lambda words: [word for word in words if word.lower() not in stop_words])
@@ -123,7 +126,7 @@ def data_preprocessing(df):
         lambda words: [lemmatizer.lemmatize(word, get_wordnet_pos(word)) for word in words]
     )
     # print()
-    # print(df_filtered[['words_cleaned', 'words_lemmatized']].head(10))
+    print(df_filtered[['words_cleaned', 'words_lemmatized']].head(10))
 
     # Remove extra spaces
     df_filtered['processed_text'] = df_filtered['words_lemmatized'].apply(lambda words: ' '.join(words).strip())
@@ -157,14 +160,11 @@ def data_preprocessing(df):
     # print(df_filtered['target'].head())
 
     # Converting texts to Numerical Values:
-
     vectorizer = TfidfVectorizer()
-
     X = vectorizer.fit_transform(df_filtered['processed_text'])
-    # print(df_filtered['processed_text'].apply(type).value_counts())
+    print(df_filtered['processed_text'].apply(type).value_counts())
 
     # DATA VISUALIZATION:
-
     # target distribution:
     target_counts = df_filtered['target'].value_counts()
 
@@ -180,12 +180,12 @@ def data_preprocessing(df):
     plt.figure(figsize=(7, 7))
     plt.pie(target_counts, labels=custom_labels, colors=colors, autopct='%1.1f%%', startangle=140)
     plt.title('Target Distribution', size=14)
-    # plt.show()
+    plt.show()
 
     positive_text = ' '.join(df_filtered[df_filtered['target'] == 1]['processed_text'].astype(str))
     negative_text = ' '.join(df_filtered[df_filtered['target'] == 0]['processed_text'].astype(str))
 
-    # plot_wordclouds(positive_text, negative_text)
+    plot_wordclouds(positive_text, negative_text)
 
     # group lengths by emotion labels
     df_filtered['text_length'] = df_filtered['processed_text'].apply(len)
@@ -201,10 +201,9 @@ def data_preprocessing(df):
     plt.xlabel('Tweet Length')
     plt.ylabel('Frequency')
     plt.legend()
-    # plt.show()
+    plt.show()
 
     # sentiment distribution per user
-
     top_users = df['user'].value_counts().head().index
     top_users_df = df[df['user'].isin(top_users)]
 
@@ -217,7 +216,7 @@ def data_preprocessing(df):
     plt.ylabel('Tweets')
     plt.legend(title='Sentiment', labels=['Positive', 'Negative'])
     plt.xticks(rotation=45)
-    # plt.show()
+    plt.show()
 
     # Outlier
     z_scores = stats.zscore(df_filtered['text_length'])
@@ -233,8 +232,10 @@ def data_preprocessing(df):
     plt.ylabel('Tweet Lengths')
     plt.legend()
     plt.grid(True)
-    # plt.show()
+    plt.show()
 
+
+    # Separate training and test data
     y = df_filtered['target']
     x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     print("Train set size:", x_train.shape)
@@ -245,6 +246,7 @@ def data_preprocessing(df):
     if hasattr(x_train, "toarray"): x_train = x_train.toarray()
     if hasattr(x_test, "toarray"): x_test = x_test.toarray()
 
+    # Train and evaluate different classifiers
     classifier = {
         "Logistic Regression": LogisticRegression(),
         "Random Forest Classifier": RandomForestClassifier(),
@@ -280,7 +282,6 @@ def data_preprocessing(df):
         print(scores_df.mean().apply("{:.5f}".format))
         print("\###############################################################\n")
 
-    # BURADA DATASET KÜÇÜK OLDUĞU İÇİN C FALAN DEĞİŞMELİ !! BEN KÜÇÜK DATASETE UYDURDUM
     # hypermeter intervals
     param_distributions = {
         'C': [0.1, 1, 10],
@@ -338,10 +339,7 @@ def data_preprocessing(df):
     plt.ylabel('Actual')
     plt.show()
 
-
-
-
 df = readDataset("training.1600000.processed.noemoticon.csv")
 # df = readDataset("test_dataset.csv")
-# data_details(df)
+data_details(df)
 data_preprocessing(df)
