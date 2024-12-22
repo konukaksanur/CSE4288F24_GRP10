@@ -5,26 +5,22 @@ import matplotlib.pyplot as plt
 import string
 import re
 import nltk
-from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
-from nltk.corpus import wordnet
-from collections import Counter
-from sklearn.feature_extraction.text import TfidfVectorizer
+from nltk.corpus import wordnet, stopwords
 from wordcloud import WordCloud
 from scipy import stats
 
 from sklearn.model_selection import train_test_split, cross_validate, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix, silhouette_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
+
 from sklearn.neighbors import KNeighborsClassifier
 
 from sklearn.cluster import KMeans, DBSCAN
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import silhouette_score
 from sklearn.feature_extraction.text import TfidfVectorizer
 from textblob import TextBlob
 
@@ -32,22 +28,24 @@ from sklearn.naive_bayes import GaussianNB  # Naive Bayes import
 from sklearn.tree import DecisionTreeClassifier  # gain
 from sklearn.neural_network import MLPClassifier
 
+from sklearn.exceptions import ConvergenceWarning  # for sklearn ConvergenceWarning 
+import kagglehub
+import warnings
+
 nltk.download('stopwords')
 nltk.download('punkt_tab')
 nltk.download('wordnet')
 nltk.download('averaged_perceptron_tagger')
 nltk.download('averaged_perceptron_tagger_eng')
 
-import warnings
-from sklearn.exceptions import ConvergenceWarning  # sklearn'den ConvergenceWarning için
-import kagglehub
+
 
 # Download latest version
 path = kagglehub.dataset_download("kazanova/sentiment140")
 
 print("Path to dataset files:", path)
 
-# SyntaxWarning, ConvergenceWarning ve UserWarning türündeki uyarıları engelle
+# SyntaxWarning, ConvergenceWarning ve UserWarning warnings
 warnings.filterwarnings('ignore', category=SyntaxWarning)
 warnings.filterwarnings('ignore', category=ConvergenceWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -254,88 +252,88 @@ def data_preprocessing(df):
     if hasattr(x_train, "toarray"): x_train = x_train.toarray()
     if hasattr(x_test, "toarray"): x_test = x_test.toarray()
 
-    classifier = {
-        "Logistic Regression": LogisticRegression(),
-        "Random Forest Classifier": RandomForestClassifier(),
-        "Support Vector Classifier": SVC(),
-        "Naive Bayes": GaussianNB(),
-        "Decision Tree (Gini)": DecisionTreeClassifier(criterion='gini'),
-        "Decision Tree (Gain)": DecisionTreeClassifier(criterion='entropy'),
-        "Artificial Neural Network (ANN)": MLPClassifier(),
-        "K-Nearest Neighbors (KNN)": KNeighborsClassifier()
-    }
+    # classifier = {
+    #     "Logistic Regression": LogisticRegression(),
+    #     "Random Forest Classifier": RandomForestClassifier(),
+    #     "Support Vector Classifier": SVC(),
+    #     "Naive Bayes": GaussianNB(),
+    #     "Decision Tree (Gini)": DecisionTreeClassifier(criterion='gini'),
+    #     "Decision Tree (Gain)": DecisionTreeClassifier(criterion='entropy'),
+    #     "Artificial Neural Network (ANN)": MLPClassifier(),
+    #     "K-Nearest Neighbors (KNN)": KNeighborsClassifier()
+    # }
 
-    for name, classifier in classifier.items():
-        classifier.fit(x_train, y_train)
+    # for name, classifier in classifier.items():
+    #     classifier.fit(x_train, y_train)
 
-        y_test_pred = classifier.predict(x_test)
+    #     y_test_pred = classifier.predict(x_test)
 
-        accuracy = accuracy_score(y_test, y_test_pred)
-        conf_matrix = confusion_matrix(y_test, y_test_pred)
-        class_report = classification_report(y_test, y_test_pred)
+    #     accuracy = accuracy_score(y_test, y_test_pred)
+    #     conf_matrix = confusion_matrix(y_test, y_test_pred)
+    #     class_report = classification_report(y_test, y_test_pred)
 
-        scores = cross_validate(classifier, x_train, y_train, scoring=['accuracy', 'precision', 'recall', 'f1'], cv=10,
-                                return_train_score=False)
+    #     scores = cross_validate(classifier, x_train, y_train, scoring=['accuracy', 'precision', 'recall', 'f1'], cv=10,
+    #                             return_train_score=False)
 
-        scores_df = pd.DataFrame(scores)
+    #     scores_df = pd.DataFrame(scores)
 
-        print(f"Model: {name.upper()}")
-        print(f"Accuracy Score: {accuracy:.5f}")
-        print("Confusion MAtrix:")
-        print(conf_matrix)
-        print("Classification Report:")
-        print(class_report)
-        print("Cross-Validation Scores:")
-        print(scores_df.mean().apply("{:.5f}".format))
-        print("\###############################################################\n")
+    #     print(f"Model: {name.upper()}")
+    #     print(f"Accuracy Score: {accuracy:.5f}")
+    #     print("Confusion MAtrix:")
+    #     print(conf_matrix)
+    #     print("Classification Report:")
+    #     print(class_report)
+    #     print("Cross-Validation Scores:")
+    #     print(scores_df.mean().apply("{:.5f}".format))
+    #     print("\###############################################################\n")
 
-    # BURADA DATASET KÜÇÜK OLDUĞU İÇİN C FALAN DEĞİŞMELİ !! BEN KÜÇÜK DATASETE UYDURDUM
-    # hypermeter intervals
-    param_distributions = {
-        'C': [0.1, 1, 10],
-        'solver': ['liblinear', 'saga'],
-        'max_iter': [100, 200, 300]
-    }
+    # # BURADA DATASET KÜÇÜK OLDUĞU İÇİN C FALAN DEĞİŞMELİ !! BEN KÜÇÜK DATASETE UYDURDUM
+    # # hypermeter intervals
+    # param_distributions = {
+    #     'C': [0.1, 1, 10],
+    #     'solver': ['liblinear', 'saga'],
+    #     'max_iter': [100, 200, 300]
+    # }
 
-    # model
-    model = LogisticRegression()
+    # # model
+    # model = LogisticRegression()
 
-    # RandomizedSearchCV object
-    random_search = RandomizedSearchCV(
-        estimator=model,
-        param_distributions=param_distributions,
-        n_iter=100,
-        scoring='accuracy',
-        cv=5,
-        verbose=1,
-        random_state=42,
-        n_jobs=1
+    # # RandomizedSearchCV object
+    # random_search = RandomizedSearchCV(
+    #     estimator=model,
+    #     param_distributions=param_distributions,
+    #     n_iter=100,
+    #     scoring='accuracy',
+    #     cv=5,
+    #     verbose=1,
+    #     random_state=42,
+    #     n_jobs=1
 
-    )
+    # )
 
-    # training model
-    random_search.fit(X, y)
+    # # training model
+    # random_search.fit(X, y)
 
-    print("Best Parameters:", random_search.best_params_)
-    print("Best Score:", random_search.best_score_)
+    # print("Best Parameters:", random_search.best_params_)
+    # print("Best Score:", random_search.best_score_)
 
-    # TRAINING THE MODEL
-    # best parameters with Logistic Regression Model
-    model = LogisticRegression(solver='saga', max_iter=100, C=1)
+    # # TRAINING THE MODEL
+    # # best parameters with Logistic Regression Model
+    # model = LogisticRegression(solver='saga', max_iter=100, C=1)
 
-    # training model
-    model.fit(x_train, y_train)
+    # # training model
+    # model.fit(x_train, y_train)
 
-    # prediction test set
-    y_pred = model.predict(x_test)
+    # # prediction test set
+    # y_pred = model.predict(x_test)
 
-    # performance metrics
-    accuracy = accuracy_score(y_test, y_pred)
-    report = classification_report(y_test, y_pred)
-    conf_matrix = confusion_matrix(y_test, y_pred)
+    # # performance metrics
+    # accuracy = accuracy_score(y_test, y_pred)
+    # report = classification_report(y_test, y_pred)
+    # conf_matrix = confusion_matrix(y_test, y_pred)
 
-    print(f"Accuracy: {accuracy: .4f}")
-    print("Classification Report: \n", report)
+    # print(f"Accuracy: {accuracy: .4f}")
+    # print("Classification Report: \n", report)
 
     # #visualization confusion matrix
     # plt.figure(figsize=(8,6))
@@ -346,6 +344,10 @@ def data_preprocessing(df):
     # plt.xlabel('Predicted')
     # plt.ylabel('Actual')
     # plt.show()
+
+
+
+
 
     # UNSUPERVISED LEARNING
 
@@ -376,8 +378,50 @@ def data_preprocessing(df):
     df_filtered['dbscan_labels'] = dbscan.labels_
 
     # #calculate silhouette score
-    # kmeans_silhouette= silhouette_score(x_combined, df_filtered['kmeans_labels'])
-    # dbscan_silhouette= silhouette_score(x_combined, df_filtered['dbscan_labels'])
+    kmeans_silhouette= silhouette_score(x_combined, df_filtered['kmeans_labels'])
+    dbscan_silhouette= silhouette_score(x_combined, df_filtered['dbscan_labels'])
+
+    print("K-means Silhouette Score:", kmeans_silhouette)
+    print("DBSSCAN Silhouette Score:", dbscan_silhouette)
+
+    # KMeans
+    kmeans = KMeans(random_state=42)
+
+    # range for number of clusters
+    k_range = range(2,11)
+    inertia = []
+
+    # for different number of clusters
+    for k in k_range:
+        kmaens = KMeans(n_clusters=k, random_state=42)
+        kmeans.fit(x_combined)
+        inertia.append(kmeans.inertia_)
+
+    # Elbow Method Graph
+    plt.figure(figsize=(10,6))
+    plt.plot(k_range, inertia, marker='o')
+    plt.title('Elbow Method')
+    plt.xlabel('Clustering (K)')
+    plt.ylabel('Total Internal Error Sum of Squares (Interia)')
+    plt.show()
+
+
+    # Silhouette
+    silhouette_scores = []
+    for k in k_range:
+        kmaens = KMeans(n_clusters=k, random_state=42)
+        cluster_labels = kmeans.fit_predict(x_combined)
+        silhouette_avg = silhouette_score(x_combined, cluster_labels)
+        silhouette_scores.append(silhouette_avg)
+    
+    # Silhouette graph
+    plt.figure(figsize=(10, 6))
+    plt.plot(k_range, silhouette_scores, marker='o')
+    plt.title('Selecting the Number of Clusters with Silhouette Score')
+    plt.xlabel('Clusters')
+    plt.ylabel('Average Silhouette Score')
+    plt.show()
+
 
 
 df = readDataset("training.1600000.processed.noemoticon.csv")
