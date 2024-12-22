@@ -4,7 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import string
 import re
-import nltk         #pip install nltk
+import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem  import WordNetLemmatizer
@@ -31,16 +31,11 @@ from sklearn.naive_bayes import GaussianNB # Naive Bayes import
 from sklearn.tree import DecisionTreeClassifier #gain
 from sklearn.neural_network import MLPClassifier
 
-
-
-
-
 nltk.download('stopwords')
 nltk.download('punkt')
 nltk.download('wordnet')
 nltk.download('averaged_perceptron_tagger')
 nltk.download('averaged_perceptron_tagger_eng')
-
 
 def readDataset(FileName ):
     column_names = ['target', 'ids', 'date', 'flag', 'user', 'text']
@@ -56,7 +51,6 @@ def data_details(df):
     print("\nMissing value count \n")
     print(df.isnull().sum())
     print("\nDuplicated value count" , df.duplicated().sum())
-
 
 def get_wordnet_pos(word):
     tag = nltk.pos_tag([word])[0][1][0].upper()
@@ -90,14 +84,17 @@ def data_preprocessing(df):
     print(df_filtered)
 
     df_filtered = df[['target', 'text']].copy()
+
     df_filtered['text'] = df_filtered['text'].str.lower()
     df_filtered['text'] = df_filtered['text'].replace('@[A-Za-z0-9]+', '', regex=True)
     df_filtered['text'] = df_filtered['text'].replace(r'htt\S+', '', regex=True)
     df_filtered['text'] = df_filtered['text'].replace(r'www\S+', '', regex=True)
     df_filtered['text'] = df_filtered['text'].apply(lambda x: re.sub('[0-9]+', '', x))
+
     table = str.maketrans('', '', string.punctuation)
     df_filtered['text'] = df_filtered['text'].apply(lambda x: ' '.join([w.translate(table) for w in x.split()]))
     df_filtered['words'] = df_filtered['text'].apply(word_tokenize)
+
     stop_words = set(stopwords.words('english'))
     df_filtered['words_cleaned'] = df_filtered['words'].apply(lambda words: [word for word in words if word.lower() not in stop_words])
     print(df_filtered[['text', 'words', 'words_cleaned']].head())
@@ -171,7 +168,6 @@ def data_preprocessing(df):
     positive_text = ' '.join(df_filtered[df_filtered['target'] == 1]['processed_text'].astype(str))
     negative_text = ' '.join(df_filtered[df_filtered['target'] == 0]['processed_text'].astype(str))
     
-        
 
     #plot_workclouds(positive_text, negative_text)
 
@@ -232,9 +228,9 @@ def data_preprocessing(df):
 
     classifier = {
         "Logistic Regression": LogisticRegression(),
-        "Random Forest Classsifier": RandomForestClassifier(),
+        "Random Forest Classifier": RandomForestClassifier(),
         "Support Vector Classifier" : SVC(),
-        "Naive Bayes": GaussianNB(),  
+        #"Naive Bayes": GaussianNB(),  
         "Decision Tree (Gini)": DecisionTreeClassifier(criterion='gini'),
         "Decision Tree (Gain)": DecisionTreeClassifier(criterion='entropy'),
         "Artificial Neural Network (ANN)": MLPClassifier(),
@@ -316,15 +312,15 @@ def data_preprocessing(df):
     print(f"Accuracy: {accuracy: .4f}")
     print("Classification Report: \n", report)
 
-    #visualization confusion matrix
-    plt.figure(figsize=(8,6))
-    sns.heatmap(conf_matrix, annot=True, fnt='d', cmap='Blues',
-    xticklabels=['Negative', 'Pozitive'],
-    yticklabels=['Negative', 'Pozitive'])
-    plt.title('Confusion Matrix')
-    plt.xlabel('Predicted')
-    plt.ylabel('Actual')
-    plt.show()
+    # #visualization confusion matrix
+    # plt.figure(figsize=(8,6))
+    # sns.heatmap(conf_matrix, annot=True, fnt='d', cmap='Blues',
+    # xticklabels=['Negative', 'Pozitive'],
+    # yticklabels=['Negative', 'Pozitive'])
+    # plt.title('Confusion Matrix')
+    # plt.xlabel('Predicted')
+    # plt.ylabel('Actual')
+    # plt.show()
 
 
     #UNSUPERVISED LEARNING 
@@ -333,17 +329,17 @@ def data_preprocessing(df):
     #preprocessing for unsupervised learning
     #calculate frequency words
     vectorizer= TfidfVectorizer()
-    x= vectorizer.fit_transform(df_filtered['processed_tweets']).toArray() #transformation
+    x= vectorizer.fit_transform(df_filtered['processed_text']).toarray() #transformation
 
     #calculate sentiment score for each tweet in column 'processed_tweets' using TextBlob
     # 'polarity' value ranges from -1(negative) to 1 (possitive)
-    df_filtered['sentiment_score']= df_filtered['processed_tweets'].apply(lambda x: TextBlob(x).sentiment.polarity)
+    df_filtered['sentiment_score']= df_filtered['processed_text'].apply(lambda x: TextBlob(x).sentiment.polarity)
 
     #convert sentiment score into two-dimensional array (-1 and 1)
     sentiment_scores= df_filtered['sentiment_score'].values.reshape(-1,1)
 
     #combine tfidf results and sentiment score
-    x_combined= np.hstack((X,sentiment_scores))
+    x_combined= np.hstack((x,sentiment_scores))
 
     #kmeans
     kmeans= KMeans(n_clusters=2, random_state=42)
@@ -355,9 +351,9 @@ def data_preprocessing(df):
     dbscan.fit(x_combined)
     df_filtered['dbscan_labels']= dbscan.labels_
 
-    #calculate silhouette score
-    kmeans_silhouette= silhouette_score(x_combined, df_filtered['kmeans_labels'])
-    dbscan_silhouette= silhouette_score(x_combined, df_filtered['dbscan_labels'])
+    # #calculate silhouette score
+    # kmeans_silhouette= silhouette_score(x_combined, df_filtered['kmeans_labels'])
+    # dbscan_silhouette= silhouette_score(x_combined, df_filtered['dbscan_labels'])
 
     
 
