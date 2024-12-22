@@ -283,15 +283,15 @@ def data_preprocessing(df):
     # BURADA DATASET KÜÇÜK OLDUĞU İÇİN C FALAN DEĞİŞMELİ !! BEN KÜÇÜK DATASETE UYDURDUM
     # hypermeter intervals
     param_distributions = {
-        'C': [0.1, 1, 10],
-        'solver': ['liblinear', 'saga'],
+        'C': np.logspace(-4, 4, 20),
+        'solver': ['liblinear', 'saga'], #liblinear for smalldataset and saga for bigdataset
         'max_iter': [100, 200, 300]
     }
-
+    
     # model
     model = LogisticRegression()
 
-    # RandomizedSearchCV object
+    # RandomizedSearchCV object 
     random_search = RandomizedSearchCV(
         estimator=model,
         param_distributions=param_distributions,
